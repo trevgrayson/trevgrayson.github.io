@@ -1,0 +1,3 @@
+https://www.w3schools.com/bootstrap/bootstrap_carousel.asp
+https://www.w3schools.com/bootstrap/bootstrap_glyphicons.asp
+https://www.w3schools.com/bootstrap/bootstrap_scrollspy.asp
