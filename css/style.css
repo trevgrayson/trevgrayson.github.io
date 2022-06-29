@@ -119,7 +119,7 @@ a:hover {
 
 .jumbotron {
   background-color: #9bc2cf;
-  background-image: url("../assets/contour-lines.png");
+  /*background-image: url("../assets/contour-lines.png");*/
   text-align: center;
   color: #fff;
   padding: 2%;
@@ -135,4 +135,47 @@ body {
   font-family: 'Verdana', serif;
   background-color: #eef7fa;
   color: #242424;
+}
+
+#map {
+    height: 600px;
+    width: 80%;
+    display: inline-block;
+}
+
+#panel {
+    width: 16%;
+    padding: 20px;
+    display: inline-block;
+    vertical-align: top;
+    text-align: center;
+    line-height: 18px;
+    background-color: azure
+
+}
+
+.legend-control-container {
+    width: 140px;
+    height: 100px;
+    background-color: azure;
+    padding: 10px;
+    line-height: 30px;
+    text-align: center;
+    border: solid gray 2px;
+}
+
+.range-slider {
+    width: 50%;
+}
+
+#forward {
+    float: right;
+}
+
+#reverse {
+    float: left;
+}
+
+.leaflet-popup-content p {
+    margin: 0.2em 0;
 }

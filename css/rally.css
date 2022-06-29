@@ -5,21 +5,21 @@
       left: 45px;
       top: 50px;
       display: inline-block;
-      font-family: 'wrcroman';
+      /*font-family: 'wrcroman';*/
   }
   body {
       background-color: black;
   }
-  @font-face {
-      font-family: 'wrcroman';
-      src: url('WRCROMAN.ttf');
-  }
-  div.image {
-      height: 49px;
-      width: 105px;
-      content:url('wrclogo.png');
-      position: absolute;
-  }
+  /*@font-face {*/
+  /*    font-family: 'wrcroman';*/
+  /*    src: url('WRCROMAN.ttf');*/
+  /*}*/
+  /*div.image {*/
+  /*    height: 49px;*/
+  /*    width: 105px;*/
+  /*    content:url('wrclogo.png');*/
+  /*    position: absolute;*/
+  /*}*/
   #border {
       border-width: 4px;
   }
@@ -32,7 +32,7 @@
       text-align: center;
       background-color: rgba(0,0,0,1);
       float: left;
-      font-family: "wrcroman";
+      /*font-family: "wrcroman";*/
   }
   #vidiv {
       width: 50%;
@@ -42,7 +42,7 @@
       text-align: center;
       background-color: rgba(0,0,0,1);
       float: right;
-      font-family: "wrcroman";
+      /*font-family: "wrcroman";*/
   }
   .legend-control-container {
       width: 140px;
@@ -52,7 +52,7 @@
       line-height: 45px;
       text-align: center;
       border: solid black 3px;
-      font-family: 'wrcroman';
+      /*font-family: 'wrcroman';*/
   }
   
   .temporal-legend {
