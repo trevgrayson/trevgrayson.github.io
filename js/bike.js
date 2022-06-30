@@ -1,5 +1,10 @@
+//Data preparation
+// Bulk export from Strava
+//
+
+
 //function to instantiate the Leaflet map
-function createMap(){
+function createMap() {
     //create the map
     const map = L.map('map', {
         center: [20, 0],
@@ -15,7 +20,7 @@ function createMap(){
 }
 
 //function to convert markers to circle markers
-function pointToLayer(feature, latlng, attributes){
+function pointToLayer(feature, latlng, attributes) {
     //Determine which attribute to visualize with proportional symbols
     var attribute = attributes[0];
 
@@ -40,14 +45,14 @@ function pointToLayer(feature, latlng, attributes){
     popupContent += "<p><b>Emmisions per capita in " + year + ":</b> " + feature.properties[attribute] + " metric tonnes   </p>";
     //bind the popup to the circle marker
     layer.bindPopup(popupContent, {
-        offset: new L.Point(0,-options.radius)
+        offset: new L.Point(0, -options.radius)
     });
     //event listeners to open popup on hover
     layer.on({
-        mouseover: function(){
+        mouseover: function () {
             this.openPopup();
         },
-        mouseout: function(){
+        mouseout: function () {
             this.closePopup();
         },
     })
@@ -56,59 +61,51 @@ function pointToLayer(feature, latlng, attributes){
 }
 
 //function to create popups
-function onEachFeature(feature, layer){
+function onEachFeature(feature, layer) {
 
-    if (feature.properties && feature.properties.name) {
-        var popupContent = '<p>' + feature.properties.name + '</p>'
-        popupContent += feature.properties.time;
+    if (feature.properties && feature.properties.ActivityName) {
+        var popupContent = '<p>' + feature.properties.ActivityName + '</p>'
+        popupContent += feature.properties.ActivityGear;
     }
     layer.bindPopup(popupContent);
-
-    // var attribute = attributes[0];
-    // var attValue = feature.properties[attribute];
-    // console.log(attribute)
-    // console.log(attValue)
-    // if (attValue === "Afternoon Ride") {
-    //     layer.setStyle({color: 'orange'})
-    // }
-    //
-    // var layer = L.polyline(latlngs)
-    // var popupContent = "<p><b>Name:</b> " + attValue + "</p>";
-    // layer.bindPopup(popupContent)
-    // //event listeners to open popup on hover
-    // layer.on({
-    //     mouseover: function(){
-    //         this.openPopup();
-    //     },
-    //     mouseout: function(){
-    //         this.closePopup();
-    //     },
-    // })
-    // return layer;
 
 }
 
 //Add circle markers for point features to the map
-function createPropSymbols(data, map, attributes){
+function createPropSymbols(data, map, attributes) {
     //create a Leaflet GeoJSON layer and add it to the map
     L.geoJson(data, {
-        pointToLayer: function(feature, latlng){
+        pointToLayer: function (feature, latlng) {
             return pointToLayer(feature, latlng, attributes);
         },
     }).addTo(map);
 }
 
-function createLines(data, map, attributes){
+function createLines(data, map, attributes) {
     //create a Leaflet GeoJSON layer and add it to the map
-    var routes = L.geoJson(data, {
+    var allrides = L.geoJson(data, {
         onEachFeature: onEachFeature
     }).addTo(map)
-    map.fitBounds(routes.getBounds())
+    var roadrides = L.geoJson(data, {
+        filter: function (feature, layer) {
+            return feature.properties.ActivityGear === "Emonda";
+        },
+        onEachFeature: onEachFeature
+    }).addTo(map)
+    var mountainrides = L.geoJson(data, {
+        filter: function (feature, layer) {
+            return feature.properties.ActivityGear !== "Emonda";
+        },
+        onEachFeature: onEachFeature
+    }).addTo(map)
+    // var mountainrides = L.geoJson(data)
+    map.fitBounds(allrides.getBounds())
+    rideToggle(map, allrides, roadrides, mountainrides)
 }
 
-function textbox(map){
+function textBox(map) {
     var textBox = L.Control.extend({
-        onAdd: function(map) {
+        onAdd: function (map) {
             var text = L.DomUtil.create('div');
             text.id = "info_text";
             text.innerHTML = "<p><b>Trevor's Biking</b></p>\n" +
@@ -116,12 +113,13 @@ function textbox(map){
                 "    </p>"
             return text;
         },
-        onRemove: function(map) {
-          //nothing
+        onRemove: function (map) {
+            //nothing
         }
     })
     map.addControl(new textBox())
 }
+
 
 //calculate the radius of each proportional symbol
 function calcPropRadius(attValue) {
@@ -130,12 +128,12 @@ function calcPropRadius(attValue) {
     //area based on attribute value and scale factor
     var area = attValue * scaleFactor;
     //radius calculated based on area
-    var radius = Math.sqrt(area/Math.PI);
+    var radius = Math.sqrt(area / Math.PI);
     return radius;
 }
 
 //Create new sequence controls
-function createSequenceControls(map, attributes){
+function createSequenceControls(map, attributes) {
     //create range input element (slider)
     $('#panel').append('<button class="skip" id="reverse">Reverse</button>');
     $('#reverse').html('<img src="img/reverse.png">');
@@ -152,26 +150,27 @@ function createSequenceControls(map, attributes){
     });
 
     //click listener for buttons
-    $('.skip').click(function(){
+    $('.skip').click(function () {
         //get the old index value
         var index = $('.range-slider').val();
 
         //increment or decrement depending on button clicked
-        if ($(this).attr('id') == 'forward'){
+        if ($(this).attr('id') == 'forward') {
             index++;
             //if past the last attribute, wrap around to first attribute
             index = index > 6 ? 0 : index;
-        } else if ($(this).attr('id') == 'reverse'){
+        } else if ($(this).attr('id') == 'reverse') {
             index--;
             //if past the first attribute, wrap around to last attribute
             index = index < 0 ? 6 : index;
-        };
+        }
+        ;
 
         //update slider
         $('.range-slider').val(index);
 
         //input listener for slider
-        $('.range-slider').on('input', function(){
+        $('.range-slider').on('input', function () {
             var index = $(this).val();
             updatePropSymbols(map, attributes[index]);
         });
@@ -182,9 +181,9 @@ function createSequenceControls(map, attributes){
 }
 
 //Resize proportional symbols according to new attribute values
-function updatePropSymbols(map, attribute){
-    map.eachLayer(function(layer){
-        if (layer.feature && layer.feature.properties[attribute]){
+function updatePropSymbols(map, attribute) {
+    map.eachLayer(function (layer) {
+        if (layer.feature && layer.feature.properties[attribute]) {
             //access feature properties
             var props = layer.feature.properties;
 
@@ -202,15 +201,70 @@ function updatePropSymbols(map, attribute){
 
             //replace the layer popup
             layer.bindPopup(popupContent, {
-                offset: new L.Point(0,-radius)
+                offset: new L.Point(0, -radius)
             });
             updateLegend(map, attribute);
         }
     });
 }
 
+function rideToggle(map, allrides, roadrides, mountainrides) {
+    var ToggleControl = L.Control.extend({
+        options: {
+            position: "topleft"
+        },
+        onAdd: function (map) {
+            // var container = L.DomUtil.create('div', 'btn-group');
+            // container += L.DomUtil.create('button', 'btn-success', 'allrides')
+            // container += L.DomUtil.create('button', 'btn-primary', 'roadrides')
+            // container += L.DomUtil.create('button', 'btn-danger', 'mountainrides')
+            // return container
+        }
+    })
+    console.log("before clicks")
+    $('#allrides').click(function() {
+        console.log('clicked')
+        if (map.hasLayer(roadrides)) {
+            map.removeLayer(roadrides)
+        }
+        if (map.hasLayer(roadrides)) {
+            map.removeLayer(mountainrides)
+        }
+        map.addLayer(allrides)
+        map.fitBounds(allrides.getBounds())
+    })
+    $('#roadrides').click(function() {
+        if (map.hasLayer(roadrides)) {
+            map.removeLayer(allrides)
+        }
+        if (map.hasLayer(roadrides)) {
+            map.removeLayer(mountainrides)
+        }
+        map.addLayer(roadrides)
+        map.fitBounds(roadrides.getBounds())
+    })
+    $('#mountainrides').click(function() {
+        if (map.hasLayer(roadrides)) {
+            map.removeLayer(allrides)
+        }
+        if (map.hasLayer(roadrides)) {
+            map.removeLayer(roadrides)
+        }
+        map.addLayer(mountainrides)
+        map.fitBounds(mountainrides.getBounds())
+    })
+    // map.addControl(new ToggleControl())
+    var ToggleSwitch = L.Handler.extend({
+
+    })
+}
+
+{
+
+}
+
 //Create map legend
-function createLegend(map, attributes){
+function createLegend(map, attributes) {
     var LegendControl = L.Control.extend({
         options: {
             position: 'bottomleft'
@@ -254,7 +308,7 @@ function createLegend(map, attributes){
             };
 
             //loop to add each circle and text to svg string
-            for (var circle in circles){
+            for (var circle in circles) {
                 //circle string
                 svg += '<circle class="legend-circle" id="' + circle + '" fill="#ff4300" fill-opacity="0.8" stroke="#000000" cx="30"/>';
 
@@ -274,23 +328,23 @@ function createLegend(map, attributes){
 };
 
 //Calculate the max, mean, and min values
-function getCircleValues(map, attribute){
+function getCircleValues(map, attribute) {
     //start with min at highest possible and max at lowest possible number
     var min = Infinity,
         max = -Infinity;
 
-    map.eachLayer(function(layer){
+    map.eachLayer(function (layer) {
         //get the attribute value
-        if (layer.feature){
+        if (layer.feature) {
             var attributeValue = Number(layer.feature.properties[attribute]);
 
             //set min
-            if (attributeValue < min){
+            if (attributeValue < min) {
                 min = attributeValue;
             }
 
             //set max
-            if (attributeValue > max){
+            if (attributeValue > max) {
                 max = attributeValue;
             }
         }
@@ -307,7 +361,7 @@ function getCircleValues(map, attribute){
 }
 
 //Update the legend with new attribute
-function updateLegend(map, attribute){
+function updateLegend(map, attribute) {
     //create content for legend
     var year = attribute.split("yr")[1];
     var content = "Emissions in " + year;
@@ -318,20 +372,20 @@ function updateLegend(map, attribute){
     //get the max, mean, and min values
     var circleValues = getCircleValues(map, attribute);
 
-    for (var key in circleValues){
+    for (var key in circleValues) {
         //get the radius
         var radius = calcPropRadius(circleValues[key]);
 
-        $('#'+key).attr({
+        $('#' + key).attr({
             cy: 59 - radius,
             r: radius
         });
         //add legend text
-        $('#'+key+'-text').text(Math.round(circleValues[key]*100)/100 + " Tonnes");
+        $('#' + key + '-text').text(Math.round(circleValues[key] * 100) / 100 + " Tonnes");
     }
 }
 
-function processData(data){
+function processData(data) {
     //empty array to hold attributes
     var attributes = [];
     //properties of the first feature in the dataset
@@ -339,7 +393,7 @@ function processData(data){
     // var max = -Infinity;
     // var min = Infinity;
     //push each attribute name into attributes array
-    for (var attribute in properties){
+    for (var attribute in properties) {
         attributes.push(attribute)
     }
     // for (var attribute in properties){
@@ -360,11 +414,11 @@ function processData(data){
 }
 
 //Import GeoJSON data
-function getData(map){
+function getData(map) {
     //load the data
-    $.ajax("data/many_rides.geojson", {
+    $.ajax("data/strava_routes.geojson", {
         dataType: "json",
-        success: function(response){
+        success: function (response) {
             var attributes = processData(response);
             console.log(attributes)
 
@@ -377,7 +431,7 @@ function getData(map){
 
             //create map elements
             createLines(response, map, attributes);
-            textbox(map)
+            textBox(map)
             // createPropSymbols(response, map, attributes);
             // createSequenceControls(map, attributes);
             // createLegend(map,attributes)
