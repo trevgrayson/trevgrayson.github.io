@@ -106,6 +106,23 @@ function createLines(data, map, attributes){
     map.fitBounds(routes.getBounds())
 }
 
+function textbox(map){
+    var textBox = L.Control.extend({
+        onAdd: function(map) {
+            var text = L.DomUtil.create('div');
+            text.id = "info_text";
+            text.innerHTML = "<p><b>Trevor's Biking</b></p>\n" +
+                "    <p>Here is a map of my bike routes\n" +
+                "    </p>"
+            return text;
+        },
+        onRemove: function(map) {
+          //nothing
+        }
+    })
+    map.addControl(new textBox())
+}
+
 //calculate the radius of each proportional symbol
 function calcPropRadius(attValue) {
     //scale factor to adjust symbol size evenly
@@ -360,6 +377,7 @@ function getData(map){
 
             //create map elements
             createLines(response, map, attributes);
+            textbox(map)
             // createPropSymbols(response, map, attributes);
             // createSequenceControls(map, attributes);
             // createLegend(map,attributes)
@@ -368,5 +386,6 @@ function getData(map){
     });
 
 }
+
 
 $(document).ready(createMap);
