@@ -71,16 +71,6 @@ function onEachFeature(feature, layer) {
 
 }
 
-//Add circle markers for point features to the map
-function createPropSymbols(data, map, attributes) {
-    //create a Leaflet GeoJSON layer and add it to the map
-    L.geoJson(data, {
-        pointToLayer: function (feature, latlng) {
-            return pointToLayer(feature, latlng, attributes);
-        },
-    }).addTo(map);
-}
-
 function createLines(data, map, attributes) {
     //create a Leaflet GeoJSON layer and add it to the map
     var allrides = L.geoJson(data, {
@@ -120,6 +110,107 @@ function textBox(map) {
     map.addControl(new textBox())
 }
 
+function rideToggle(map, allrides, roadrides, mountainrides) {
+    var ToggleControl = L.Control.extend({
+        options: {
+            position: "topleft"
+        },
+        onAdd: function (map) {
+            // var container = L.DomUtil.create('div', 'btn-group');
+            // container += L.DomUtil.create('button', 'btn-success', 'allrides')
+            // container += L.DomUtil.create('button', 'btn-primary', 'roadrides')
+            // container += L.DomUtil.create('button', 'btn-danger', 'mountainrides')
+            // return container
+        }
+    })
+    console.log("before clicks")
+    $('#allrides').click(function() {
+        console.log('clicked')
+        if (map.hasLayer(roadrides)) {
+            map.removeLayer(roadrides)
+        }
+        if (map.hasLayer(roadrides)) {
+            map.removeLayer(mountainrides)
+        }
+        map.addLayer(allrides)
+        map.fitBounds(allrides.getBounds())
+    })
+    $('#roadrides').click(function() {
+        if (map.hasLayer(roadrides)) {
+            map.removeLayer(allrides)
+        }
+        if (map.hasLayer(roadrides)) {
+            map.removeLayer(mountainrides)
+        }
+        map.addLayer(roadrides)
+        map.fitBounds(roadrides.getBounds())
+    })
+    $('#mountainrides').click(function() {
+        if (map.hasLayer(roadrides)) {
+            map.removeLayer(allrides)
+        }
+        if (map.hasLayer(roadrides)) {
+            map.removeLayer(roadrides)
+        }
+        map.addLayer(mountainrides)
+        map.fitBounds(mountainrides.getBounds())
+    })
+    // map.addControl(new ToggleControl())
+    var ToggleSwitch = L.Handler.extend({
+
+    })
+}
+
+//Add circle markers for point features to the map
+function createPropSymbols(data, map, attributes) {
+    //create a Leaflet GeoJSON layer and add it to the map
+    L.geoJson(data, {
+        pointToLayer: function (feature, latlng) {
+            return pointToLayer(feature, latlng, attributes);
+        },
+    }).addTo(map);
+}
+
+//function to convert markers to circle markers
+function pointToLayer(feature, latlng, attributes) {
+    //Determine which attribute to visualize with proportional symbols
+    var attribute = attributes[0];
+
+    //create marker options
+    var options = {
+        fillColor: "#ff4300",
+        color: "#000",
+        weight: 1,
+        opacity: 1,
+        fillOpacity: 0.8
+    };
+
+    //For each feature, determine its value for the selected attribute
+    var attValue = Number(feature.properties[attribute]);
+    //Give each feature's circle marker a radius based on its attribute value
+    // options.radius = calcPropRadius(attValue);
+    //create circle marker layer
+    var layer = L.circleMarker(latlng, options);
+    //build popup content string
+    var popupContent = "<p><b>Country:</b> " + feature.properties.Country + "</p>";
+    var year = attribute.split("yr")[1];
+    popupContent += "<p><b>Emmisions per capita in " + year + ":</b> " + feature.properties[attribute] + " metric tonnes   </p>";
+    //bind the popup to the circle marker
+    layer.bindPopup(popupContent, {
+        offset: new L.Point(0, -options.radius)
+    });
+    //event listeners to open popup on hover
+    layer.on({
+        mouseover: function () {
+            this.openPopup();
+        },
+        mouseout: function () {
+            this.closePopup();
+        },
+    })
+    //return the circle marker to the L.geoJson pointToLayer option
+    return layer;
+}
 
 //calculate the radius of each proportional symbol
 function calcPropRadius(attValue) {
@@ -206,61 +297,6 @@ function updatePropSymbols(map, attribute) {
             updateLegend(map, attribute);
         }
     });
-}
-
-function rideToggle(map, allrides, roadrides, mountainrides) {
-    var ToggleControl = L.Control.extend({
-        options: {
-            position: "topleft"
-        },
-        onAdd: function (map) {
-            // var container = L.DomUtil.create('div', 'btn-group');
-            // container += L.DomUtil.create('button', 'btn-success', 'allrides')
-            // container += L.DomUtil.create('button', 'btn-primary', 'roadrides')
-            // container += L.DomUtil.create('button', 'btn-danger', 'mountainrides')
-            // return container
-        }
-    })
-    console.log("before clicks")
-    $('#allrides').click(function() {
-        console.log('clicked')
-        if (map.hasLayer(roadrides)) {
-            map.removeLayer(roadrides)
-        }
-        if (map.hasLayer(roadrides)) {
-            map.removeLayer(mountainrides)
-        }
-        map.addLayer(allrides)
-        map.fitBounds(allrides.getBounds())
-    })
-    $('#roadrides').click(function() {
-        if (map.hasLayer(roadrides)) {
-            map.removeLayer(allrides)
-        }
-        if (map.hasLayer(roadrides)) {
-            map.removeLayer(mountainrides)
-        }
-        map.addLayer(roadrides)
-        map.fitBounds(roadrides.getBounds())
-    })
-    $('#mountainrides').click(function() {
-        if (map.hasLayer(roadrides)) {
-            map.removeLayer(allrides)
-        }
-        if (map.hasLayer(roadrides)) {
-            map.removeLayer(roadrides)
-        }
-        map.addLayer(mountainrides)
-        map.fitBounds(mountainrides.getBounds())
-    })
-    // map.addControl(new ToggleControl())
-    var ToggleSwitch = L.Handler.extend({
-
-    })
-}
-
-{
-
 }
 
 //Create map legend
@@ -421,13 +457,6 @@ function getData(map) {
         success: function (response) {
             var attributes = processData(response);
             console.log(attributes)
-
-            // console.log(Object.getOwnPropertyNames(map))
-            console.log(Object.getOwnPropertyDescriptors(map))
-            console.log(response)
-            // console.log(Object.getOwnPropertyNames(routes))
-            // console.log(Object.getOwnPropertyDescriptors(routes))
-
 
             //create map elements
             createLines(response, map, attributes);
