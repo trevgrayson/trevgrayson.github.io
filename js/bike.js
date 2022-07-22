@@ -67,30 +67,45 @@ function onEachFeature(feature, layer) {
         var popupContent = '<p>' + feature.properties.ActivityName + '</p>'
         popupContent += feature.properties.ActivityGear;
     }
+    console.log(layer.properties)
+    if (feature.properties.ActivityGear === "Emonda") {
+        feature.setStyle({fillColor: '#5cb85c'})
+    }
     layer.bindPopup(popupContent);
+}
 
+function updateLines(map) {
+    map.eachLayer(function(layer){
+        console.log(layer.properties)
+        if (layer.properties === "Emonda") {
+            layer.setStyle({fillColor: '#5cb85c'})
+        }
+    })
 }
 
 function createLines(data, map, attributes) {
     //create a Leaflet GeoJSON layer and add it to the map
-    var allrides = L.geoJson(data, {
-        onEachFeature: onEachFeature
-    }).addTo(map)
+    // var allrides = L.geoJson(data, {
+    //     onEachFeature: onEachFeature,
+    // }).addTo(map)
     var roadrides = L.geoJson(data, {
         filter: function (feature, layer) {
             return feature.properties.ActivityGear === "Emonda";
         },
-        onEachFeature: onEachFeature
+        onEachFeature: onEachFeature(feature),
+        fillColor: '#337ab7'
     }).addTo(map)
     var mountainrides = L.geoJson(data, {
         filter: function (feature, layer) {
             return feature.properties.ActivityGear !== "Emonda";
         },
-        onEachFeature: onEachFeature
+        onEachFeature: onEachFeature,
+        fillColor: '#d9534f'
     }).addTo(map)
     // var mountainrides = L.geoJson(data)
-    map.fitBounds(allrides.getBounds())
-    rideToggle(map, allrides, roadrides, mountainrides)
+    // updateLines(map)
+    // map.fitBounds(allrides.getBounds())
+    rideToggle(map, roadrides, mountainrides)
 }
 
 function textBox(map) {
@@ -110,45 +125,44 @@ function textBox(map) {
     map.addControl(new textBox())
 }
 
-function rideToggle(map, allrides, roadrides, mountainrides) {
-    var ToggleControl = L.Control.extend({
-        options: {
-            position: "topleft"
-        },
-        onAdd: function (map) {
-            // var container = L.DomUtil.create('div', 'btn-group');
-            // container += L.DomUtil.create('button', 'btn-success', 'allrides')
-            // container += L.DomUtil.create('button', 'btn-primary', 'roadrides')
-            // container += L.DomUtil.create('button', 'btn-danger', 'mountainrides')
-            // return container
-        }
-    })
-    console.log("before clicks")
+function rideToggle(map, roadrides, mountainrides) {
+    // var ToggleControl = L.Control.extend({
+    //     options: {
+    //         position: "topleft"
+    //     },
+    //     onAdd: function (map) {
+    //         // var container = L.DomUtil.create('div', 'btn-group');
+    //         // container += L.DomUtil.create('button', 'btn-success', 'allrides')
+    //         // container += L.DomUtil.create('button', 'btn-primary', 'roadrides')
+    //         // container += L.DomUtil.create('button', 'btn-danger', 'mountainrides')
+    //         // return container
+    //     }
+    // })
     $('#allrides').click(function() {
-        console.log('clicked')
-        if (map.hasLayer(roadrides)) {
-            map.removeLayer(roadrides)
+        if (map.hasLayer(roadrides) !== 1) {
+            // map.removeLayer(roadrides)
+            map.addLayer(roadrides)
         }
-        if (map.hasLayer(roadrides)) {
-            map.removeLayer(mountainrides)
+        if (map.hasLayer(mountainrides) !== 1) {
+            map.addLayer(mountainrides)
         }
-        map.addLayer(allrides)
-        map.fitBounds(allrides.getBounds())
+        // map.addLayer(allrides)
+        // map.fitBounds(allrides.getBounds())
     })
     $('#roadrides').click(function() {
-        if (map.hasLayer(roadrides)) {
-            map.removeLayer(allrides)
-        }
-        if (map.hasLayer(roadrides)) {
+        // if (map.hasLayer(allrides)) {
+        //     map.removeLayer(allrides)
+        // }
+        if (map.hasLayer(mountainrides)) {
             map.removeLayer(mountainrides)
         }
         map.addLayer(roadrides)
         map.fitBounds(roadrides.getBounds())
     })
     $('#mountainrides').click(function() {
-        if (map.hasLayer(roadrides)) {
-            map.removeLayer(allrides)
-        }
+        // if (map.hasLayer(allrides)) {
+        //     map.removeLayer(allrides)
+        // }
         if (map.hasLayer(roadrides)) {
             map.removeLayer(roadrides)
         }
