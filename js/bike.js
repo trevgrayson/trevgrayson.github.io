@@ -67,11 +67,16 @@ function onEachFeature(feature, layer) {
         var popupContent = '<p>' + feature.properties.ActivityName + '</p>'
         popupContent += feature.properties.ActivityGear;
     }
-    console.log(layer.properties)
-    if (feature.properties.ActivityGear === "Emonda") {
-        feature.setStyle({fillColor: '#5cb85c'})
-    }
+    // if (feature.properties.ActivityGear === "Emonda") {
+    //     feature.setStyle({fillColor: '#5cb85c'})
+    // }
     layer.bindPopup(popupContent);
+    layer.on('mouseover', function (e) {
+        this.openPopup();
+    });
+    layer.on('mouseout', function (e) {
+        this.closePopup();
+    });
 }
 
 function updateLines(map) {
@@ -92,19 +97,22 @@ function createLines(data, map, attributes) {
         filter: function (feature, layer) {
             return feature.properties.ActivityGear === "Emonda";
         },
-        onEachFeature: onEachFeature(feature),
-        fillColor: '#337ab7'
+        onEachFeature: onEachFeature,
+        color: '#337ab7'
     }).addTo(map)
     var mountainrides = L.geoJson(data, {
         filter: function (feature, layer) {
             return feature.properties.ActivityGear !== "Emonda";
         },
         onEachFeature: onEachFeature,
-        fillColor: '#d9534f'
+        color: '#d9534f'
     }).addTo(map)
-    // var mountainrides = L.geoJson(data)
-    // updateLines(map)
-    // map.fitBounds(allrides.getBounds())
+
+    // var layerGroup = L.layerGroup([roadrides, mountainrides]);
+    // var sliderControl = L.control.sliderControl({position: "bottomright", layer: layerGroup, rezoom: 10});
+    // map.addControl(sliderControl)
+    // sliderControl.startSlider()
+
     rideToggle(map, roadrides, mountainrides)
 }
 
@@ -170,9 +178,9 @@ function rideToggle(map, roadrides, mountainrides) {
         map.fitBounds(mountainrides.getBounds())
     })
     // map.addControl(new ToggleControl())
-    var ToggleSwitch = L.Handler.extend({
-
-    })
+    // var ToggleSwitch = L.Handler.extend({
+    //
+    // })
 }
 
 //Add circle markers for point features to the map
@@ -444,7 +452,16 @@ function processData(data) {
     // var min = Infinity;
     //push each attribute name into attributes array
     for (var attribute in properties) {
-        attributes.push(attribute)
+        //convert strava date to ISODate
+        if (attribute === 'ActivityDate'){
+            console.log('here')
+            var mydate = new Date(new Date('7/6/2020  10:43:36 PM'))
+            attributes.push(mydate.toISOString())
+        }
+        else{
+            attributes.push(attribute)
+        }
+
     }
     // for (var attribute in properties){
     //     //only take attributes with population values
@@ -471,6 +488,7 @@ function getData(map) {
         success: function (response) {
             var attributes = processData(response);
             console.log(attributes)
+            console.log(response)
 
             //create map elements
             createLines(response, map, attributes);
